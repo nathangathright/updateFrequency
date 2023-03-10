@@ -136,6 +136,7 @@ const updateSuggestions = () => {
 dtstart.addEventListener("change", () => {
   makeInvisible(document.querySelector("#interval-frequency"))
   makeInvisible(document.querySelector("#ending"))
+  makeEachInvisible(fieldsets)
   
   year = dtstart.value.slice(0,4)
   month = dtstart.value.slice(5,7)-1
@@ -204,16 +205,16 @@ frequency.addEventListener("change", () => {
     case "yearly":
       makeVisible(document.querySelector("#freq-yearly"))
 
-      const byweekdayYearlyOption = document.createElement("option")
-      byweekdayYearlyOption.value = "byweekdayYearly"
-      byweekdayYearlyOption.innerText = `Annually on the ${nth === 1 ? "first" : nth === 2 ? "second" : nth === 3 ? "third" : nth === 3 ? "fourth" : "fifth"} ${weekday} in ${startDate.toLocaleDateString(undefined, { month: "long" })}`
-
       const bymonthdayYearlyOption = document.createElement("option")
       bymonthdayYearlyOption.value = "bymonthdayYearly"
       bymonthdayYearlyOption.innerText = `Annually on ${startDate.toLocaleDateString(undefined, { month: "long", day: "numeric" })}`
 
+      const byweekdayYearlyOption = document.createElement("option")
+      byweekdayYearlyOption.value = "byweekdayYearly"
+      byweekdayYearlyOption.innerText = `Annually on the ${nth === 1 ? "first" : nth === 2 ? "second" : nth === 3 ? "third" : nth === 3 ? "fourth" : "fifth"} ${weekday} in ${startDate.toLocaleDateString(undefined, { month: "long" })}`
+
       yearly.innerHTML = ""
-      yearly.append(byweekdayYearlyOption, bymonthdayYearlyOption)
+      yearly.append(bymonthdayYearlyOption, byweekdayYearlyOption)
       break;
   }
 })
