@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📅</text></svg>">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="./style.css" />
+  <title>Update Frequency Form</title>
+</head>
+<body
+  class="font-inter text-base font-normal bg-slate-200 p-4 m-0 flex flex-col place-content-center place-items-center min-h-screen">
+    <form class="w-full max-w-lg flex flex-col gap-4">
+      <h1 class="mt-3 text-3xl font-extrabold tracking-tight text-slate-900">Update Frequency</h1>
+      <div class="flex gap-4">
+        <fieldset class="flex-1">
+          <label class="text-base font-medium text-gray-900">Starting on</label>
+          <input type="date" name="dtstart" id="dtstart" class="mt-2 w-full block rounded-md shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        </fieldset>
+
+        <fieldset id="recurring-simple" class="flex-1 opacity-50 pointer-events-none">
+          <label for="suggestions" class="text-base font-medium text-gray-900">Repeating</label>
+          <select id="suggestions" name="suggestions" class="mt-2 w-full block rounded-md shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></select>
+        </fieldset>
+      </div>
+
+      <fieldset id="interval-frequency" class="hidden">
+        <label class="text-base font-medium text-gray-900">Interval & Frequency</label>
+        <div class="flex items-center gap-2 mt-2">
+          <span class="shrink-0 text-gray-500">Repeat every</span>
+          <div class="relative rounded-md shadow-sm">
+            <label for="interval" class="sr-only">Interval</label>
+            <input type="number" min="1" name="interval" id="interval" class="block w-32 rounded-md border-gray-300 pl-3 pr-20 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" value="1">
+            <div class="absolute inset-y-0 right-0 flex items-center">
+              <label for="frequency" class="sr-only">Frequency</label>
+              <select id="frequency" name="frequency" class="h-full rounded-md border-transparent bg-transparent py-0 pl-2 pr-8 text-gray-500 text-right focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <option value="daily">day</option>
+                <option value="weekly">week</option>
+                <option value="monthly">month</option>
+                <option value="yearly">year</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset id="freq-weekly" class="hidden">
+        <label class="text-base font-medium text-gray-900">Repeat on</label>
+        <div class="mt-2 flex items-center space-x-0">
+          <label class="relative p-0.5 rounded-full flex items-center justify-center cursor-pointer">
+            <input type="checkbox" name="byweekday" value="SU" class="sr-only peer" aria-labelledby="byweekday-0-label">
+            <span id="byweekday-0-label" class="sr-only">Sunday</span>
+            <span aria-hidden="true" class="h-8 w-8 flex place-items-center place-content-center bg-white peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-0 text-gray-600 border border-gray-300 rounded-full text-sm">S</span>
+          </label>
+          <label class="relative p-0.5 rounded-full flex items-center justify-center cursor-pointer">
+            <input type="checkbox" name="byweekday" value="MO" class="sr-only peer" aria-labelledby="byweekday-1-label">
+            <span id="byweekday-1-label" class="sr-only">Monday</span>
+            <span aria-hidden="true" class="h-8 w-8 flex place-items-center place-content-center bg-white peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-0 text-gray-600 border border-gray-300 rounded-full text-sm">M</span>
+          </label>
+          <label class="relative p-0.5 rounded-full flex items-center justify-center cursor-pointer">
+            <input type="checkbox" name="byweekday" value="TU" class="sr-only peer" aria-labelledby="byweekday-2-label">
+            <span id="byweekday-2-label" class="sr-only">Tuesday</span>
+            <span aria-hidden="true" class="h-8 w-8 flex place-items-center place-content-center bg-white peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-0 text-gray-600 border border-gray-300 rounded-full text-sm">T</span>
+          </label>
+          <label class="relative p-0.5 rounded-full flex items-center justify-center cursor-pointer">
+            <input type="checkbox" name="byweekday" value="WE" class="sr-only peer" aria-labelledby="byweekday-3-label">
+            <span id="byweekday-3-label" class="sr-only">Wednesday</span>
+            <span aria-hidden="true" class="h-8 w-8 flex place-items-center place-content-center bg-white peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-0 text-gray-600 border border-gray-300 rounded-full text-sm">W</span>
+          </label>
+          <label class="relative p-0.5 rounded-full flex items-center justify-center cursor-pointer">
+            <input type="checkbox" name="byweekday" value="TH" class="sr-only peer" aria-labelledby="byweekday-4-label">
+            <span id="byweekday-4-label" class="sr-only">Thursday</span>
+            <span aria-hidden="true" class="h-8 w-8 flex place-items-center place-content-center bg-white peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-0 text-gray-600 border border-gray-300 rounded-full text-sm">T</span>
+          </label>
+          <label class="relative p-0.5 rounded-full flex items-center justify-center cursor-pointer">
+            <input type="checkbox" name="byweekday" value="FR" class="sr-only peer" aria-labelledby="byweekday-5-label">
+            <span id="byweekday-5-label" class="sr-only">Friday</span>
+            <span aria-hidden="true" class="h-8 w-8 flex place-items-center place-content-center bg-white peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-0 text-gray-600 border border-gray-300 rounded-full text-sm">F</span>
+          </label>
+          <label class="relative p-0.5 rounded-full flex items-center justify-center cursor-pointer">
+            <input type="checkbox" name="byweekday" value="SA" class="sr-only peer" aria-labelledby="byweekday-6-label">
+            <span id="byweekday-6-label" class="sr-only">Saturday</span>
+            <span aria-hidden="true" class="h-8 w-8 flex place-items-center place-content-center bg-white peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-0 text-gray-600 border border-gray-300 rounded-full text-sm">S</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset id="freq-monthly" class="hidden">
+        <label for="monthly" class="sr-only">Repeat on</label>
+        <select id="monthly" name="monthly" class="mt-2 block rounded-md shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></select>
+      </fieldset>
+
+      <fieldset id="freq-yearly" class="hidden">
+        <label for="yearly" class="sr-only">Repeat on</label>
+        <select id="yearly" name="yearly" class="mt-2 block rounded-md shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></select>
+      </fieldset>
+
+      <fieldset id="ending" class="hidden">
+        <label class="text-base font-medium text-gray-900">Ends</label>
+        <div class="mt-2 space-y-2">
+          <div class="flex items-center">
+            <input id="never" name="ends" type="radio" checked class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500">
+            <label for="never" class="ml-3 block text-sm font-medium text-gray-700">Never</label>
+          </div>
+    
+          <div class="flex items-center">
+            <input id="until" name="ends" type="radio" class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500">
+            <label for="until" class="ml-3 w-11 block text-sm font-medium text-gray-700">Until</label>
+            <input type="date" name="ending-date" id="ending-date" class="block rounded-md shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+          </div>
+    
+          <div class="flex items-center">
+            <input id="after" name="ends" type="radio" class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500">
+            <label for="after" class="ml-3 w-11 block text-sm font-medium text-gray-700">After</label>
+            <div class="relative rounded-md shadow-sm">
+              <input type="number" min="1" name="count" id="count" class="block w-32 rounded-md border-gray-300 pl-3 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="1">
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                <span class="text-gray-500 sm:text-sm" id="episodes">episode</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center">
+            <input id="complete" name="ends" type="radio" class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500">
+            <label for="complete" class="ml-3 block text-sm font-medium text-gray-700">Complete</label>
+          </div>
+        </div>
+      </fieldset>
+
+      <pre class="flex overflow-auto rounded-md text-sm leading-5 text-white language-html bg-slate-900 whitespace-pre-wrap"><code class="p-3"></code></pre>
+    </form>
+  <script type="module" src="./script.js"></script>
+</body>
+</html>
