@@ -252,6 +252,11 @@ count.addEventListener("change", () => {
   }
 })
 
+document.querySelector('#complete').addEventListener("change", () => {
+  endingDate.value = ""
+  count.value = ""
+})
+
 const updateCode = () => {
   let rule;
   let options = {};
