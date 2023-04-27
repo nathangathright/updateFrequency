@@ -118,7 +118,7 @@ const updateSuggestions = () => {
 
   const monthlyOption = document.createElement("option")
   monthlyOption.value = `FREQ=MONTHLY;BYDAY=${nth}${dayabbr}`
-  monthlyOption.innerText = `Monthly on the ${nth === 1 ? "first" : nth === 2 ? "second" : nth === 3 ? "third" : nth === 3 ? "fourth" : "fifth"} ${weekday}`
+  monthlyOption.innerText = `Monthly on the ${nth === 1 ? "first" : nth === 2 ? "second" : nth === 3 ? "third" : nth === 4 ? "fourth" : "fifth"} ${weekday}`
 
   const yearlyOption = document.createElement("option")
   yearlyOption.value = `FREQ=YEARLY;BYMONTH=${month+1};BYMONTHDAY=${day}`
