@@ -27,6 +27,83 @@ const updateMin = () => {
   document.querySelector("#ending-date").min = document.querySelector("#dtstart").value
 }
 
+const updateWeekday = () => {
+  const allWeekdays = document.querySelectorAll("#freq-weekly input")
+  const startingWeekday = document.querySelector(`#freq-weekly input[value='${dayabbr}']`);
+
+  allWeekdays.forEach((weekday) => {
+    weekday.checked = false
+    weekday.disabled = false
+  })
+
+  startingWeekday.checked = true
+  startingWeekday.disabled = true
+}
+
+const updateMonthly = () => {
+  const byweekdayWeeklyOption = document.createElement("option")
+  byweekdayWeeklyOption.value = "byweekday"
+  byweekdayWeeklyOption.innerText = `Monthly on the ${nth === 1 ? "first" : nth === 2 ? "second" : nth === 3 ? "third" : nth === 3 ? "fourth" : "fifth"} ${weekday}`
+
+  const bymonthdayWeeklyOption = document.createElement("option")
+  bymonthdayWeeklyOption.value = "bymonthday"
+  bymonthdayWeeklyOption.innerText = `Monthly on day ${dayOfMonth}`
+
+  const initalSelection = document.querySelector("#freq-monthly select").value
+  monthly.innerHTML = ""
+  monthly.append(byweekdayWeeklyOption, bymonthdayWeeklyOption)
+
+  switch (initalSelection) {
+    case "byweekday":
+      document.querySelector("#freq-monthly select").value = "byweekday"
+      break;
+    case "bymonthday":
+      document.querySelector("#freq-monthly select").value = "bymonthday"
+      break;
+  }
+}
+
+const updateYearly = () => {
+  const bymonthdayYearlyOption = document.createElement("option")
+  bymonthdayYearlyOption.value = "bymonthdayYearly"
+  bymonthdayYearlyOption.innerText = `Annually on ${startDate.toLocaleDateString(undefined, { month: "long", day: "numeric" })}`
+
+  const byweekdayYearlyOption = document.createElement("option")
+  byweekdayYearlyOption.value = "byweekdayYearly"
+  byweekdayYearlyOption.innerText = `Annually on the ${nth === 1 ? "first" : nth === 2 ? "second" : nth === 3 ? "third" : nth === 3 ? "fourth" : "fifth"} ${weekday} in ${startDate.toLocaleDateString(undefined, { month: "long" })}`
+
+  const initalSelection = document.querySelector("#freq-yearly select").value
+  yearly.innerHTML = ""
+  yearly.append(bymonthdayYearlyOption, byweekdayYearlyOption)
+
+  switch (initalSelection) {
+    case "bymonthdayYearly":
+      document.querySelector("#freq-yearly select").value = "bymonthdayYearly"
+      break;
+    case "byweekdayYearly":
+      document.querySelector("#freq-yearly select").value = "byweekdayYearly"
+      break;
+  }
+}
+
+const updateFrequency = () => {
+  makeEachInvisible(fieldsets)
+  switch (frequency.value) {
+    case "weekly":
+      makeVisible(document.querySelector("#freq-weekly"))
+      updateWeekday()
+      break;
+    case "monthly":
+      updateMonthly()
+      makeVisible(document.querySelector("#freq-monthly"))
+      break;
+    case "yearly":
+      updateYearly()
+      makeVisible(document.querySelector("#freq-yearly"))
+      break;
+  }
+}
+
 const FREQ_constant = (string) => {
   switch (string) {
     case "daily":
@@ -110,7 +187,6 @@ const updateSuggestions = () => {
   const dailyOption = document.createElement("option")
   dailyOption.value = "FREQ=DAILY"
   dailyOption.innerText = "Daily"
-  dailyOption.selected = true
 
   const weeklyOption = document.createElement("option")
   weeklyOption.value = `FREQ=WEEKLY;BYDAY=${dayabbr}`
@@ -128,16 +204,32 @@ const updateSuggestions = () => {
   customOption.value = "custom"
   customOption.innerText = "Custom…"
 
+  const initalSelection = suggestions.value.split(";")[0]
   suggestions.innerHTML = ""
   suggestions.append(dailyOption, weeklyOption, monthlyOption, yearlyOption, customOption)
+
+  switch (initalSelection) {
+    case "FREQ=DAILY":
+      dailyOption.selected = true
+      break;
+    case `FREQ=WEEKLY`:
+      weeklyOption.selected = true
+      break;
+    case `FREQ=MONTHLY`:
+      monthlyOption.selected = true
+      break;
+    case `FREQ=YEARLY`:
+      yearlyOption.selected = true
+      break;
+    case `custom`:
+      customOption.selected = true
+      break;
+  }
+
   document.querySelector("#recurring-simple").classList.remove("opacity-50","pointer-events-none")
 }
 
 dtstart.addEventListener("change", () => {
-  makeInvisible(document.querySelector("#interval-frequency"))
-  makeInvisible(document.querySelector("#ending"))
-  makeEachInvisible(fieldsets)
-  
   year = dtstart.value.slice(0,4)
   month = dtstart.value.slice(5,7)-1
   day = dtstart.value.slice(8,10)
@@ -147,6 +239,7 @@ dtstart.addEventListener("change", () => {
   dayOfMonth = startDate.toLocaleDateString(undefined, { day: "numeric" })
   dayabbr = weekday.slice(0, 2).toUpperCase()
 
+  updateFrequency()
   updateSuggestions()
   updateMin()
 })
@@ -178,46 +271,9 @@ interval.addEventListener("change", () => {
   }
 })
 
-frequency.addEventListener("change", () => {
-  const startingWeekday = document.querySelector(`#freq-weekly input[value='${dayabbr}']`);
-  makeEachInvisible(fieldsets)
-
-  switch (frequency.value) {
-    case "weekly":
-      makeVisible(document.querySelector("#freq-weekly"))
-      startingWeekday.checked = true
-      startingWeekday.disabled = true
-      break;
-    case "monthly":
-      makeVisible(document.querySelector("#freq-monthly"))
-
-      const byweekdayWeeklyOption = document.createElement("option")
-      byweekdayWeeklyOption.value = "byweekday"
-      byweekdayWeeklyOption.innerText = `Monthly on the ${nth === 1 ? "first" : nth === 2 ? "second" : nth === 3 ? "third" : nth === 3 ? "fourth" : "fifth"} ${weekday}`
-
-      const bymonthdayWeeklyOption = document.createElement("option")
-      bymonthdayWeeklyOption.value = "bymonthday"
-      bymonthdayWeeklyOption.innerText = `Monthly on day ${dayOfMonth}`
-      monthly.innerHTML = ""
-      monthly.append(byweekdayWeeklyOption, bymonthdayWeeklyOption)
-
-      break;
-    case "yearly":
-      makeVisible(document.querySelector("#freq-yearly"))
-
-      const bymonthdayYearlyOption = document.createElement("option")
-      bymonthdayYearlyOption.value = "bymonthdayYearly"
-      bymonthdayYearlyOption.innerText = `Annually on ${startDate.toLocaleDateString(undefined, { month: "long", day: "numeric" })}`
-
-      const byweekdayYearlyOption = document.createElement("option")
-      byweekdayYearlyOption.value = "byweekdayYearly"
-      byweekdayYearlyOption.innerText = `Annually on the ${nth === 1 ? "first" : nth === 2 ? "second" : nth === 3 ? "third" : nth === 3 ? "fourth" : "fifth"} ${weekday} in ${startDate.toLocaleDateString(undefined, { month: "long" })}`
-
-      yearly.innerHTML = ""
-      yearly.append(bymonthdayYearlyOption, byweekdayYearlyOption)
-      break;
-  }
-})
+frequency.addEventListener("change",
+  updateFrequency
+)
 
 const weekdays = document.querySelectorAll("#freq-weekly input")
 weekdays.forEach(day => {
