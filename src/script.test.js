@@ -62,6 +62,7 @@ describe("initializeUpdateFrequencyForm", () => {
     expect(document.querySelector("#dtstart").value).toBe("2026-03-26");
     expect(document.querySelector("#suggestions").options).toHaveLength(5);
     expect(document.querySelector("pre code").textContent).toContain("<podcast:updateFrequency");
+    expect(document.querySelector("pre code").innerHTML).toContain('class="xml-tag"');
   });
 
   it("updates derived labels and custom output when the start date changes", () => {
@@ -111,5 +112,79 @@ describe("initializeUpdateFrequencyForm", () => {
     expect(document.querySelector("#after").checked).toBe(true);
     expect(document.querySelector("#episodes").textContent).toBe("episodes");
     expect(code.textContent).toContain("COUNT=4");
+  });
+
+  it("returns to never mode by clearing ending inputs and removing limits from the tag", () => {
+    initializeUpdateFrequencyForm({ today: new Date("2026-03-26T12:00:00.000Z") });
+
+    const suggestions = document.querySelector("#suggestions");
+    const endingDate = document.querySelector("#ending-date");
+    const never = document.querySelector("#never");
+    const code = document.querySelector("pre code");
+
+    suggestions.value = "custom";
+    suggestions.dispatchEvent(new Event("change"));
+
+    endingDate.value = "2026-04-30";
+    endingDate.dispatchEvent(new Event("change"));
+
+    never.checked = true;
+    never.dispatchEvent(new Event("change"));
+
+    expect(endingDate.value).toBe("");
+    expect(document.querySelector("#count").value).toBe("");
+    expect(code.textContent).not.toContain("UNTIL=");
+    expect(code.textContent).not.toContain("COUNT=");
+  });
+
+  it("uses complete mode output and clears ending inputs", () => {
+    initializeUpdateFrequencyForm({ today: new Date("2026-03-26T12:00:00.000Z") });
+
+    const suggestions = document.querySelector("#suggestions");
+    const count = document.querySelector("#count");
+    const complete = document.querySelector("#complete");
+    const code = document.querySelector("pre code");
+
+    suggestions.value = "custom";
+    suggestions.dispatchEvent(new Event("change"));
+
+    count.value = "3";
+    count.dispatchEvent(new Event("change"));
+
+    complete.checked = true;
+    complete.dispatchEvent(new Event("change"));
+
+    expect(count.value).toBe("");
+    expect(document.querySelector("#ending-date").value).toBe("");
+    expect(code.textContent).toBe('<podcast:updateFrequency complete="true">Complete</podcast:updateFrequency>');
+  });
+
+  it("hides custom controls again when switching back to a preset suggestion", () => {
+    initializeUpdateFrequencyForm({ today: new Date("2026-03-26T12:00:00.000Z") });
+
+    const suggestions = document.querySelector("#suggestions");
+    const intervalFrequency = document.querySelector("#interval-frequency");
+    const ending = document.querySelector("#ending");
+    const weeklyFieldset = document.querySelector("#freq-weekly");
+    const frequency = document.querySelector("#frequency");
+    const code = document.querySelector("pre code");
+
+    suggestions.value = "custom";
+    suggestions.dispatchEvent(new Event("change"));
+
+    frequency.value = "weekly";
+    frequency.dispatchEvent(new Event("change"));
+
+    expect(intervalFrequency.classList.contains("hidden")).toBe(false);
+    expect(ending.classList.contains("hidden")).toBe(false);
+    expect(weeklyFieldset.classList.contains("hidden")).toBe(false);
+
+    suggestions.value = "FREQ=DAILY";
+    suggestions.dispatchEvent(new Event("change"));
+
+    expect(intervalFrequency.classList.contains("hidden")).toBe(true);
+    expect(ending.classList.contains("hidden")).toBe(true);
+    expect(weeklyFieldset.classList.contains("hidden")).toBe(true);
+    expect(code.textContent).toContain('rrule="FREQ=DAILY"');
   });
 });

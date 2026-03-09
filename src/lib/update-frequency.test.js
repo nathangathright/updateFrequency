@@ -8,6 +8,8 @@ import {
   getSuggestionOptions,
   getYearlyOptions,
   parseDateInput,
+  parseDateInputAsUtc,
+  toUtcMidnightISOString,
 } from "./update-frequency.js";
 
 const getState = (overrides = {}) => ({
@@ -63,7 +65,9 @@ describe("update-frequency helpers", () => {
     const state = getState();
     const output = buildUpdateFrequencyOutput(state);
 
-    expect(output.tag).toContain(`<podcast:updateFrequency dtstart="${state.dateContext.startDate.toISOString()}"`);
+    expect(output.tag).toContain(
+      `<podcast:updateFrequency dtstart="${toUtcMidnightISOString(state.dateContext.startDate)}"`,
+    );
     expect(output.rrule).toBe("FREQ=DAILY");
     expect(output.description).toBe("Every day");
   });
@@ -132,7 +136,17 @@ describe("update-frequency helpers", () => {
     });
     const output = buildUpdateFrequencyOutput(state);
 
-    expect(output.tag).toContain(`UNTIL=${parseDateInput(state.endingDate).toISOString()}`);
+    expect(output.tag).toContain(`UNTIL=${parseDateInputAsUtc(state.endingDate).toISOString()}`);
+  });
+
+  it("serializes selected dates as UTC midnight without shifting the calendar day", () => {
+    const output = buildUpdateFrequencyOutput(
+      getState({
+        suggestionValue: "custom",
+      }),
+    );
+
+    expect(output.tag).toContain('dtstart="2026-03-26T00:00:00.000Z"');
   });
 
   it("supports complete mode without an rrule", () => {

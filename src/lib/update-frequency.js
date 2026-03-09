@@ -1,4 +1,6 @@
-import { RRule } from "rrule";
+import * as rrulePkg from "rrule";
+
+const { RRule } = rrulePkg.RRule ? rrulePkg : Reflect.get(rrulePkg, "default");
 
 const WEEKDAY_CODES = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
 const WEEKDAY_RULES = {
@@ -46,6 +48,14 @@ export const toDateInputValue = (date) => {
 export const parseDateInput = (value) => {
   const [year, month, day] = value.split("-").map(Number);
   return new Date(year, month - 1, day);
+};
+
+export const toUtcMidnightISOString = (date) =>
+  new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())).toISOString();
+
+export const parseDateInputAsUtc = (value) => {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
 };
 
 export const getDateContext = (date) => {
@@ -115,6 +125,24 @@ const getNthWeekdayRule = (dayCode, nth) => WEEKDAY_RULES[dayCode].nth(nth);
 
 const getWeekdayRules = (dayCodes) => dayCodes.map((dayCode) => WEEKDAY_RULES[dayCode]);
 
+const getRuleForState = (state) =>
+  state.suggestionValue !== "custom"
+    ? { rule: RRule.fromString(state.suggestionValue), untilISO: undefined }
+    : buildCustomRule(state);
+
+const serializeRRule = (rule, untilISO) => {
+  let rrule = rule.toString().slice(6);
+
+  if (untilISO) {
+    rrule = rrule.replace(/UNTIL=\d{8}T\d{6}Z/, `UNTIL=${untilISO}`);
+  }
+
+  return rrule;
+};
+
+const serializeUpdateFrequencyTag = ({ description, dtstart, rrule }) =>
+  `<podcast:updateFrequency dtstart="${dtstart}" rrule="${rrule}">${description}</podcast:updateFrequency>`;
+
 const buildCustomRule = ({
   count,
   dateContext,
@@ -161,7 +189,7 @@ const buildCustomRule = ({
 
   let untilISO;
   if (endMode === "until" && endingDate) {
-    const untilDate = parseDateInput(endingDate);
+    const untilDate = parseDateInputAsUtc(endingDate);
     untilISO = untilDate.toISOString();
     options.until = untilDate;
   }
@@ -184,21 +212,14 @@ export const buildUpdateFrequencyOutput = (state) => {
     };
   }
 
-  const { rule, untilISO } =
-    state.suggestionValue !== "custom"
-      ? { rule: RRule.fromString(state.suggestionValue), untilISO: undefined }
-      : buildCustomRule(state);
-
+  const { rule, untilISO } = getRuleForState(state);
   const description = capitalize(rule.toText());
-  let rrule = rule.toString().slice(6);
-
-  if (untilISO) {
-    rrule = rrule.replace(/UNTIL=\d{8}T\d{6}Z/, `UNTIL=${untilISO}`);
-  }
+  const rrule = serializeRRule(rule, untilISO);
+  const dtstart = toUtcMidnightISOString(state.dateContext.startDate);
 
   return {
     description,
     rrule,
-    tag: `<podcast:updateFrequency dtstart="${state.dateContext.startDate.toISOString()}" rrule="${rrule}">${description}</podcast:updateFrequency>`,
+    tag: serializeUpdateFrequencyTag({ description, dtstart, rrule }),
   };
 };

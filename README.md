@@ -21,9 +21,7 @@ pnpm dev
 ## Checks
 
 ```bash
-pnpm lint
-pnpm test
-pnpm build
+pnpm check
 ```
 
 The production build is emitted to `dist/`.

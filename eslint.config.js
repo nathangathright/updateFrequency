@@ -18,6 +18,14 @@ export default [
     },
   },
   {
+    files: ["*.config.js"],
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: globals.node,
+    },
+  },
+  {
     files: ["**/*.test.js"],
     languageOptions: {
       globals: {

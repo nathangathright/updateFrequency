@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/forms";
-@plugin "@tailwindcss/typography";
 
 :root {
   color-scheme: light;
@@ -13,6 +12,31 @@
 
 code:empty {
   display: none;
+}
+
+pre code {
+  display: block;
+  font-variant-ligatures: none;
+}
+
+.xml-punct {
+  color: #94a3b8;
+}
+
+.xml-tag {
+  color: #67e8f9;
+}
+
+.xml-attr {
+  color: #f9a8d4;
+}
+
+.xml-value {
+  color: #86efac;
+}
+
+.xml-text {
+  color: #f8fafc;
 }
 
 [list] {
