@@ -1,404 +1,309 @@
-import { RRule } from 'rrule'
+import {
+  buildUpdateFrequencyOutput,
+  getDateContext,
+  getMonthlyOptions,
+  getSuggestionOptions,
+  getYearlyOptions,
+  parseDateInput,
+  toDateInputValue,
+} from "./lib/update-frequency.js";
 
-const dtstart = document.querySelector("#dtstart")
-const suggestions = document.querySelector("#suggestions")
-const interval = document.querySelector("#interval")
-const frequency = document.querySelector("#frequency")
-const endingNever = document.querySelector("#never")
-const endingDate = document.querySelector("#ending-date")
-const count = document.querySelector("#count")
-const fieldsets = document.querySelectorAll("fieldset[id*=freq-]")
+const FREQUENCY_LABELS = {
+  daily: "day",
+  weekly: "week",
+  monthly: "month",
+  yearly: "year",
+};
 
 const makeVisible = (element) => {
-  element.classList.remove("hidden")
-}
+  element.classList.remove("hidden");
+};
 
 const makeInvisible = (element) => {
-  element.classList.add("hidden")
-}
+  element.classList.add("hidden");
+};
 
 const makeEachInvisible = (elements) => {
   elements.forEach((element) => {
-    makeInvisible(element)
-  })
-}
+    makeInvisible(element);
+  });
+};
 
-const updateMin = () => {
-  document.querySelector("#ending-date").min = document.querySelector("#dtstart").value
-}
+const setSelectOptions = (select, options, selectedValue) => {
+  select.replaceChildren(
+    ...options.map(({ label, value }) => {
+      const option = select.ownerDocument.createElement("option");
+      option.value = value;
+      option.textContent = label;
+      return option;
+    }),
+  );
 
-const updateWeekday = () => {
-  const allWeekdays = document.querySelectorAll("#freq-weekly input")
-  const startingWeekday = document.querySelector(`#freq-weekly input[value='${dayabbr}']`);
+  const nextValue = options.some((option) => option.value === selectedValue)
+    ? selectedValue
+    : options[0]?.value;
 
-  allWeekdays.forEach((weekday) => {
-    weekday.checked = false
-    weekday.disabled = false
-  })
-
-  startingWeekday.checked = true
-  startingWeekday.disabled = true
-}
-
-const updateMonthly = () => {
-  const byweekdayWeeklyOption = document.createElement("option")
-  byweekdayWeeklyOption.value = "byweekday"
-  byweekdayWeeklyOption.innerText = `Monthly on the ${nth === 1 ? "first" : nth === 2 ? "second" : nth === 3 ? "third" : nth === 3 ? "fourth" : "fifth"} ${weekday}`
-
-  const bymonthdayWeeklyOption = document.createElement("option")
-  bymonthdayWeeklyOption.value = "bymonthday"
-  bymonthdayWeeklyOption.innerText = `Monthly on day ${dayOfMonth}`
-
-  const initalSelection = document.querySelector("#freq-monthly select").value
-  monthly.innerHTML = ""
-  monthly.append(byweekdayWeeklyOption, bymonthdayWeeklyOption)
-
-  switch (initalSelection) {
-    case "byweekday":
-      document.querySelector("#freq-monthly select").value = "byweekday"
-      break;
-    case "bymonthday":
-      document.querySelector("#freq-monthly select").value = "bymonthday"
-      break;
+  if (nextValue) {
+    select.value = nextValue;
   }
-}
+};
 
-const updateYearly = () => {
-  const bymonthdayYearlyOption = document.createElement("option")
-  bymonthdayYearlyOption.value = "bymonthdayYearly"
-  bymonthdayYearlyOption.innerText = `Annually on ${startDate.toLocaleDateString(undefined, { month: "long", day: "numeric" })}`
-
-  const byweekdayYearlyOption = document.createElement("option")
-  byweekdayYearlyOption.value = "byweekdayYearly"
-  byweekdayYearlyOption.innerText = `Annually on the ${nth === 1 ? "first" : nth === 2 ? "second" : nth === 3 ? "third" : nth === 3 ? "fourth" : "fifth"} ${weekday} in ${startDate.toLocaleDateString(undefined, { month: "long" })}`
-
-  const initalSelection = document.querySelector("#freq-yearly select").value
-  yearly.innerHTML = ""
-  yearly.append(bymonthdayYearlyOption, byweekdayYearlyOption)
-
-  switch (initalSelection) {
-    case "bymonthdayYearly":
-      document.querySelector("#freq-yearly select").value = "bymonthdayYearly"
-      break;
-    case "byweekdayYearly":
-      document.querySelector("#freq-yearly select").value = "byweekdayYearly"
-      break;
+const getMatchingSuggestionValue = (currentValue, options) => {
+  if (!currentValue) {
+    return options[0]?.value;
   }
-}
 
-const updateFrequency = () => {
-  makeEachInvisible(fieldsets)
-  switch (frequency.value) {
-    case "weekly":
-      makeVisible(document.querySelector("#freq-weekly"))
-      updateWeekday()
-      break;
-    case "monthly":
-      updateMonthly()
-      makeVisible(document.querySelector("#freq-monthly"))
-      break;
-    case "yearly":
-      updateYearly()
-      makeVisible(document.querySelector("#freq-yearly"))
-      break;
+  if (currentValue === "custom") {
+    return "custom";
   }
-}
 
-const FREQ_constant = (string) => {
-  switch (string) {
-    case "daily":
-      return RRule.DAILY
-    case "weekly":
-      return RRule.WEEKLY
-    case "monthly":
-      return RRule.MONTHLY
-    case "yearly":
-      return RRule.YEARLY
-    default:
-      return RRule.DAILY
+  if (options.some((option) => option.value === currentValue)) {
+    return currentValue;
   }
-}
 
-const weekday_constants = (array) => {
-  let weekdays = []
-  array.forEach((day) => {
-    switch (day) {
-      case "MO":
-        weekdays.push(RRule.MO)
-        break;
-      case "TU":
-        weekdays.push(RRule.TU)
-        break;
-      case "WE":
-        weekdays.push(RRule.WE)
-        break;
-      case "TH":
-        weekdays.push(RRule.TH)
-        break;
-      case "FR":
-        weekdays.push(RRule.FR)
-        break;
-      case "SA":
-        weekdays.push(RRule.SA)
-        break;
-      case "SU":
-        weekdays.push(RRule.SU)
-        break;
-      default:
-        break;
+  const prefix = currentValue.split(";")[0];
+
+  return (
+    options.find((option) => option.value === prefix || option.value.startsWith(`${prefix};`))?.value ??
+    options[0]?.value
+  );
+};
+
+export const initializeUpdateFrequencyForm = ({ doc = document, today = new Date() } = {}) => {
+  const form = doc.querySelector("form");
+  if (!form) {
+    return null;
+  }
+
+  const elements = {
+    code: doc.querySelector("pre code"),
+    complete: doc.querySelector("#complete"),
+    count: doc.querySelector("#count"),
+    dtstart: doc.querySelector("#dtstart"),
+    ending: doc.querySelector("#ending"),
+    endingDate: doc.querySelector("#ending-date"),
+    endingNever: doc.querySelector("#never"),
+    fieldsets: doc.querySelectorAll("fieldset[id*=freq-]"),
+    frequency: doc.querySelector("#frequency"),
+    interval: doc.querySelector("#interval"),
+    intervalFrequency: doc.querySelector("#interval-frequency"),
+    monthly: doc.querySelector("#monthly"),
+    recurringSimple: doc.querySelector("#recurring-simple"),
+    suggestions: doc.querySelector("#suggestions"),
+    until: doc.querySelector("#until"),
+    after: doc.querySelector("#after"),
+    yearly: doc.querySelector("#yearly"),
+    weekdays: doc.querySelectorAll("#freq-weekly input"),
+    weeklyFieldset: doc.querySelector("#freq-weekly"),
+    monthlyFieldset: doc.querySelector("#freq-monthly"),
+    yearlyFieldset: doc.querySelector("#freq-yearly"),
+    episodes: doc.querySelector("#episodes"),
+  };
+
+  if (!elements.dtstart.value) {
+    elements.dtstart.value = toDateInputValue(today);
+  }
+
+  let dateContext = getDateContext(parseDateInput(elements.dtstart.value));
+
+  const syncDateContext = () => {
+    dateContext = getDateContext(parseDateInput(elements.dtstart.value));
+  };
+
+  const updateMin = () => {
+    elements.endingDate.min = elements.dtstart.value;
+  };
+
+  const updateEpisodeLabel = () => {
+    elements.episodes.textContent = Number(elements.count.value) === 1 ? "episode" : "episodes";
+  };
+
+  const updateIntervalLabels = () => {
+    const isSingular = Number(elements.interval.value) === 1;
+
+    Array.from(elements.frequency.options).forEach((option) => {
+      const label = FREQUENCY_LABELS[option.value];
+      option.textContent = isSingular ? label : `${label}s`;
+    });
+  };
+
+  const updateWeekday = () => {
+    elements.weekdays.forEach((weekdayInput) => {
+      weekdayInput.checked = false;
+      weekdayInput.disabled = false;
+    });
+
+    const startingWeekday = doc.querySelector(`#freq-weekly input[value="${dateContext.dayabbr}"]`);
+    if (startingWeekday) {
+      startingWeekday.checked = true;
+      startingWeekday.disabled = true;
     }
-  })
-  return weekdays
-}
+  };
 
-const nth_weekday_constant = (string, integer) => {
-  switch (string) {
-    case "MO":
-      return RRule.MO.nth(integer)
-    case "TU":
-      return RRule.TU.nth(integer)
-    case "WE":
-      return RRule.WE.nth(integer)
-    case "TH":
-      return RRule.TH.nth(integer)
-    case "FR":
-      return RRule.FR.nth(integer)
-    case "SA":
-      return RRule.SA.nth(integer)
-    case "SU":
-      return RRule.SU.nth(integer)
-    default:
-      return RRule.MO.nth(integer)
-  }
-}
+  const updateMonthly = () => {
+    const options = getMonthlyOptions(dateContext);
+    setSelectOptions(elements.monthly, options, elements.monthly.value);
+  };
 
-dtstart.value = new Date().toISOString().split('T')[0]
+  const updateYearly = () => {
+    const options = getYearlyOptions(dateContext);
+    setSelectOptions(elements.yearly, options, elements.yearly.value);
+  };
 
-let year = dtstart.value.slice(0,4)
-let month = dtstart.value.slice(5,7)-1
-let day = dtstart.value.slice(8,10)
-let startDate = new Date(year, month, day)
-let weekday = startDate.toLocaleDateString(undefined, { weekday: "long" })
-let nth = Math.floor((startDate.getDate() - 1) / 7) + 1
-let dayOfMonth = startDate.toLocaleDateString(undefined, { day: "numeric" })
-let dayabbr = weekday.slice(0, 2).toUpperCase()
+  const updateFrequency = () => {
+    makeEachInvisible(elements.fieldsets);
 
-const updateSuggestions = () => {
-  const dailyOption = document.createElement("option")
-  dailyOption.value = "FREQ=DAILY"
-  dailyOption.innerText = "Daily"
-
-  const weeklyOption = document.createElement("option")
-  weeklyOption.value = `FREQ=WEEKLY;BYDAY=${dayabbr}`
-  weeklyOption.innerText = `Weekly on ${weekday}`
-
-  const monthlyOption = document.createElement("option")
-  monthlyOption.value = `FREQ=MONTHLY;BYDAY=${nth}${dayabbr}`
-  monthlyOption.innerText = `Monthly on the ${nth === 1 ? "first" : nth === 2 ? "second" : nth === 3 ? "third" : nth === 4 ? "fourth" : "fifth"} ${weekday}`
-
-  const yearlyOption = document.createElement("option")
-  yearlyOption.value = `FREQ=YEARLY;BYMONTH=${month+1};BYMONTHDAY=${day}`
-  yearlyOption.innerText = `Annually on ${startDate.toLocaleDateString(undefined, { month: "long", day: "numeric" })}`
-
-  const customOption = document.createElement("option")
-  customOption.value = "custom"
-  customOption.innerText = "Custom…"
-
-  const initalSelection = suggestions.value.split(";")[0]
-  suggestions.innerHTML = ""
-  suggestions.append(dailyOption, weeklyOption, monthlyOption, yearlyOption, customOption)
-
-  switch (initalSelection) {
-    case "FREQ=DAILY":
-      dailyOption.selected = true
-      break;
-    case `FREQ=WEEKLY`:
-      weeklyOption.selected = true
-      break;
-    case `FREQ=MONTHLY`:
-      monthlyOption.selected = true
-      break;
-    case `FREQ=YEARLY`:
-      yearlyOption.selected = true
-      break;
-    case `custom`:
-      customOption.selected = true
-      break;
-  }
-
-  document.querySelector("#recurring-simple").classList.remove("opacity-50","pointer-events-none")
-}
-
-dtstart.addEventListener("change", () => {
-  year = dtstart.value.slice(0,4)
-  month = dtstart.value.slice(5,7)-1
-  day = dtstart.value.slice(8,10)
-  startDate = new Date(year, month, day)
-  weekday = startDate.toLocaleDateString(undefined, { weekday: "long" })
-  nth = Math.floor((startDate.getDate() - 1) / 7) + 1
-  dayOfMonth = startDate.toLocaleDateString(undefined, { day: "numeric" })
-  dayabbr = weekday.slice(0, 2).toUpperCase()
-
-  updateFrequency()
-  updateSuggestions()
-  updateMin()
-})
-
-suggestions.addEventListener("change", () => {
-  if (suggestions.value === "custom") {
-    makeVisible(document.querySelector("#interval-frequency"))
-    makeVisible(document.querySelector("#ending"))
-  } else {
-    makeInvisible(document.querySelector("#interval-frequency"))
-    makeInvisible(document.querySelector("#ending"))
-    makeEachInvisible(fieldsets)
-  }
-})
-
-interval.addEventListener("change", () => {
-  const isSingular = (interval.value == 1) ? true : false
-  const isPlural = document.querySelector("#frequency").options[frequency.selectedIndex].innerText.endsWith("s")
-  const options = document.querySelectorAll("#frequency option")
-
-  if (isSingular && isPlural) {
-    options.forEach(option => {
-      option.innerText = option.innerText.slice(0, -1)
-    })
-  } else if (!isSingular && !isPlural) {
-    options.forEach(option => {
-      option.innerText = option.innerText + "s"
-    })
-  }
-})
-
-frequency.addEventListener("change",
-  updateFrequency
-)
-
-const weekdays = document.querySelectorAll("#freq-weekly input")
-weekdays.forEach(day => {
-  day.addEventListener("change", () => {
-    const days = []
-    weekdays.forEach(day => {
-      if (day.checked) {
-        days.push(day.value.toUpperCase())
-      }
-    })
-  })
-})
-
-endingNever.addEventListener("change", () => {
-  endingDate.value = ""
-  count.value = ""
-})
-
-endingDate.addEventListener("change", () => {
-  document.querySelector("#until").checked = true
-  count.value = ""
-})
-
-count.addEventListener("change", () => {
-  document.querySelector("#after").checked = true
-  endingDate.value = ""
-
-  const o = document.querySelector("#episodes")
-  if (count.value == 1) {
-    o.innerText = "episode"
-  } else {
-    o.innerText = "episodes"
-  }
-})
-
-document.querySelector('#complete').addEventListener("change", () => {
-  endingDate.value = ""
-  count.value = ""
-})
-
-const updateCode = () => {
-  let rule;
-  let options = {};
-  let untilISO;
-
-  if (document.querySelector('#complete').checked) {
-    document.querySelector("pre code").innerText = `<podcast:updateFrequency complete="true">Complete</podcast:updateFrequency>`
-    return
-  }
-
-  if (suggestions.value != "custom") {
-    rule = RRule.fromString(suggestions.value)
-  } else {
-    options.freq = FREQ_constant(frequency.value)
-
-    if(interval.value != 1) {
-      options.interval = interval.value
-    }
-
-    switch (frequency.value) {
+    switch (elements.frequency.value) {
       case "weekly":
-        const selectedWeekdays = document.querySelectorAll('input[name="byweekday"]:checked')
-        const selectedWeekdaysArray = Array.from(selectedWeekdays).map(weekday => weekday.value)
-        
-        if (selectedWeekdaysArray.length > 0) {
-          options.byweekday = weekday_constants(selectedWeekdaysArray)
-        }
+        updateWeekday();
+        makeVisible(elements.weeklyFieldset);
         break;
       case "monthly":
-        const monthly = document.querySelector("#monthly")
-        switch (monthly.value) {
-          case "byweekday":
-            options.byweekday = nth_weekday_constant(dayabbr, nth)
-            break;
-          case "bymonthday":
-            options.bymonthday = dayOfMonth
-            break;
-        }
+        updateMonthly();
+        makeVisible(elements.monthlyFieldset);
+        break;
       case "yearly":
-        const yearly = document.querySelector("#yearly")
-        switch (yearly.value) {
-          case "byweekdayYearly":
-            options.bymonth = month + 1
-            options.byweekday = nth_weekday_constant(dayabbr, nth)
-            break;
-          case "bymonthdayYearly":
-            options.bymonth = month + 1
-            options.bymonthday = dayOfMonth
-            break;
-        }
+        updateYearly();
+        makeVisible(elements.yearlyFieldset);
         break;
       default:
         break;
     }
+  };
 
-    if (document.querySelector('#until').checked && endingDate.value) {
-      let year = endingDate.value.slice(0,4)
-      let month = endingDate.value.slice(5,7)-1
-      let day = endingDate.value.slice(8,10)
-      untilISO = new Date(year, month, day).toISOString()
-      options.until = new Date(year, month, day)
+  const updateSuggestions = () => {
+    const options = getSuggestionOptions(dateContext);
+    const selectedValue = getMatchingSuggestionValue(elements.suggestions.value, options);
+
+    setSelectOptions(elements.suggestions, options, selectedValue);
+    elements.recurringSimple.classList.remove("opacity-50", "pointer-events-none");
+  };
+
+  const updateCustomVisibility = () => {
+    const isCustom = elements.suggestions.value === "custom";
+
+    if (isCustom) {
+      makeVisible(elements.intervalFrequency);
+      makeVisible(elements.ending);
+      updateFrequency();
+      return;
     }
 
-    if (document.querySelector('#count').checked && count.value) {
-      options.count = count.value
+    makeInvisible(elements.intervalFrequency);
+    makeInvisible(elements.ending);
+    makeEachInvisible(elements.fieldsets);
+  };
+
+  const getEndMode = () => {
+    if (elements.complete.checked) {
+      return "complete";
     }
 
-    rule = new RRule(options)
-  }
+    if (elements.until.checked && elements.endingDate.value) {
+      return "until";
+    }
 
-  let description = rule.toText()
-  description = description.charAt(0).toUpperCase() + description.slice(1)
+    if (elements.after.checked && elements.count.value) {
+      return "after";
+    }
 
-  let rruleStr = rule.toString().slice(6)
-  if (untilISO) {
-    rruleStr = rruleStr.replace(/UNTIL=\d{8}T\d{6}Z/, `UNTIL=${untilISO}`)
-  }
+    return "never";
+  };
 
-  document.querySelector("pre code").innerText = `<podcast:updateFrequency dtstart="${startDate.toISOString()}" rrule="${rruleStr}">${description}</podcast:updateFrequency>`
+  const getSelectedWeekdays = () =>
+    Array.from(elements.weekdays)
+      .filter((weekdayInput) => weekdayInput.checked)
+      .map((weekdayInput) => weekdayInput.value);
+
+  const updateCode = () => {
+    const output = buildUpdateFrequencyOutput({
+      count: Number(elements.count.value) || undefined,
+      dateContext,
+      endMode: getEndMode(),
+      endingDate: elements.endingDate.value,
+      frequency: elements.frequency.value,
+      interval: Number(elements.interval.value) || 1,
+      monthlyMode: elements.monthly.value,
+      selectedWeekdays: getSelectedWeekdays(),
+      suggestionValue: elements.suggestions.value,
+      yearlyMode: elements.yearly.value,
+    });
+
+    elements.code.textContent = output.tag;
+  };
+
+  elements.dtstart.addEventListener("change", () => {
+    syncDateContext();
+    updateSuggestions();
+    updateCustomVisibility();
+    updateMin();
+    updateCode();
+  });
+
+  elements.suggestions.addEventListener("change", () => {
+    updateCustomVisibility();
+    updateCode();
+  });
+
+  elements.interval.addEventListener("change", () => {
+    updateIntervalLabels();
+    updateCode();
+  });
+
+  elements.frequency.addEventListener("change", () => {
+    updateFrequency();
+    updateCode();
+  });
+
+  elements.weekdays.forEach((weekdayInput) => {
+    weekdayInput.addEventListener("change", updateCode);
+  });
+
+  elements.monthly.addEventListener("change", updateCode);
+  elements.yearly.addEventListener("change", updateCode);
+
+  elements.endingNever.addEventListener("change", () => {
+    elements.endingDate.value = "";
+    elements.count.value = "";
+    updateEpisodeLabel();
+    updateCode();
+  });
+
+  elements.endingDate.addEventListener("change", () => {
+    elements.until.checked = true;
+    elements.count.value = "";
+    updateEpisodeLabel();
+    updateCode();
+  });
+
+  elements.count.addEventListener("change", () => {
+    elements.after.checked = true;
+    elements.endingDate.value = "";
+    updateEpisodeLabel();
+    updateCode();
+  });
+
+  elements.complete.addEventListener("change", () => {
+    elements.endingDate.value = "";
+    elements.count.value = "";
+    updateEpisodeLabel();
+    updateCode();
+  });
+
+  updateSuggestions();
+  updateCustomVisibility();
+  updateIntervalLabels();
+  updateMin();
+  updateEpisodeLabel();
+  updateCode();
+
+  return {
+    elements,
+    getDateContext: () => dateContext,
+    updateCode,
+  };
+};
+
+if (typeof document !== "undefined" && document.querySelector("form")) {
+  initializeUpdateFrequencyForm();
 }
-
-document.querySelector("form").addEventListener("change", () => {
-  updateCode()
-})
-
-updateSuggestions()
-updateMin()
-updateCode()
